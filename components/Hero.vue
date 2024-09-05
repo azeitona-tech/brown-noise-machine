@@ -32,7 +32,8 @@
       <div class="controls flex items-center space-x-4">
         <button
           @click="toggleLoop"
-          class="px-4 py-2 bg-emerald-800 rounded-full hover:bg-emerald-500"
+          :disabled="!canToggleLoop"
+          class="px-4 py-2 bg-emerald-800 rounded-full hover:bg-emerald-500 cursor-pointer disabled:bg-gray-500 disabled:cursor-not-allowed "
         >
           {{ isLooping ? "Stop" : "Start" }}
         </button>
@@ -80,6 +81,13 @@ export default {
       return `${Math.floor(totalTimeInSeconds / 3600)}:${Math.floor(
         (totalTimeInSeconds % 3600) / 60
       )}:${totalTimeInSeconds % 60}`;
+    },
+    canToggleLoop() {
+      const playTotal = this.play.hours + this.play.minutes + this.play.seconds;
+      const pauseTotal =
+        this.pause.hours + this.pause.minutes + this.pause.seconds;
+
+      return playTotal > 0 && pauseTotal > 0; // Both play and pause times must be greater than 0
     },
   },
   mounted() {

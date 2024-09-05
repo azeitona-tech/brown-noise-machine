@@ -1,5 +1,5 @@
 <template>
-  <main class="container mx-auto relative">
-    <Welcome />
+  <main class="container flex justify-center items-center h-screen w-full mx-auto">
+    <Hero />
   </main>
 </template>

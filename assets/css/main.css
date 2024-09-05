@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  @variants responsive {
+      .masonry {
+          column-gap: 1.5em;
+          column-count: 1;
+      }
+      .masonry-sm {
+          column-gap: 1.5em;
+          column-count: 2;
+      }
+      .masonry-md {
+          column-gap: 1.5em;
+          column-count: 3;
+      }
+      .break-inside {
+          break-inside: avoid;
+      }
+
+  }
+}
+
+@font-face {
+  font-family: 'Uncut';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Uncut Sans Regular'), local('Uncut-Sans-Regular'),
+    url(../fonts/Uncut/Uncut-Sans-Regular.otf) format('opentype');
+}
+@font-face {
+  font-family: 'Uncut';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Uncut Sans Medium'), local('Uncut-Sans-Medium'),
+    url(../fonts/Uncut/Uncut-Sans-Medium.otf) format('opentype');
+}
+@font-face {
+  font-family: 'Uncut';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Uncut Sans SemiBold'), local('Uncut-Sans-Semibold'),
+    url(../fonts/Uncut/Uncut-Sans-Semibold.otf) format('opentype');
+}
+@font-face {
+  font-family: 'Uncut';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Uncut Sans Bold'), local('Uncut-Sans-Bold'),
+    url(../fonts/Uncut/Uncut-Sans-Bold.otf) format('opentype');
+}
+

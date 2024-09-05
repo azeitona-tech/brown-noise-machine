@@ -9,77 +9,30 @@
     </audio>
 
     <section
-      class="flex flex-col gap-4 border border-emerald-200 p-6 rounded rounded-xl"
+      class="flex flex-col gap-4 border border-emerald-200 p-6 rounded-xl"
     >
-      <div class="flex flex-col justify-start">
-        <span class="text-xl">Play Window</span>
-        <div class="flex space-x-2">
-          <input
-            type="number"
-            class="w-12 border border-emerald-200 bg-transparent rounded px-2 py-1 text-center focus:bg-emerald-200 focus:text-emerald-950 outline-none"
-            v-model="play.hours"
-            placeholder="0"
-            min="0"
-            max="6"
-          />
-          <input
-            type="number"
-            class="w-12 border border-emerald-200 bg-transparent rounded px-2 py-1 text-center focus:bg-emerald-200 focus:text-emerald-950 outline-none"
-            v-model="play.minutes"
-            placeholder="0"
-            min="0"
-            max="59"
-          />
-          <input
-            type="number"
-            class="w-12 border border-emerald-200 bg-transparent rounded px-2 py-1 text-center focus:bg-emerald-200 focus:text-emerald-950 outline-none"
-            v-model="play.seconds"
-            placeholder="0"
-            min="0"
-            max="59"
-          />
-        </div>
-        <span v-if="isPlaying && isLooping" class="text-md">{{
-          this.formattedCountdown
-        }}</span>
-      </div>
-
-      <div class="flex flex-col justify-start mt-4">
-        <span class="text-xl">Pause Window</span>
-        <div class="flex space-x-2">
-          <input
-            type="number"
-            class="w-12 border border-emerald-200 bg-transparent rounded px-2 py-1 text-center focus:bg-emerald-200 focus:text-emerald-950 outline-none"
-            v-model="pause.hours"
-            placeholder="0"
-            min="0"
-            max="6"
-          />
-          <input
-            type="number"
-            class="w-12 border border-emerald-200 bg-transparent rounded px-2 py-1 text-center focus:bg-emerald-200 focus:text-emerald-950 outline-none"
-            v-model="pause.minutes"
-            placeholder="0"
-            min="0"
-            max="59"
-          />
-          <input
-            type="number"
-            class="w-12 border border-emerald-200 bg-transparent rounded px-2 py-1 text-center focus:bg-emerald-200 focus:text-emerald-950 outline-none"
-            v-model="pause.seconds"
-            placeholder="0"
-            min="0"
-            max="59"
-          />
-        </div>
-        <span v-if="!isPlaying && isLooping" class="text-md">{{
-          this.formattedCountdown
-        }}</span>
-      </div>
+      <TimeInputWindow
+        label="Play Window"
+        v-model:hours="play.hours"
+        v-model:minutes="play.minutes"
+        v-model:seconds="play.seconds"
+      />
+      <p v-if="isLooping && isPlaying && totalTimeInSeconds > 0">
+        {{ formattedCountdown }}
+      </p>
+      <TimeInputWindow
+        label="Pause Window"
+        v-model:hours="pause.hours"
+        v-model:minutes="pause.minutes"
+        v-model:seconds="pause.seconds"
+      />
+      <p v-if="isLooping && !isPlaying && totalTimeInSeconds > 0">
+        {{ formattedCountdown }}
+      </p>
       <div class="controls flex items-center space-x-4">
         <button
-          @click="startStop"
-          class="px-4 py-2 bg-emerald-800 rounded rounded-full hover:bg-emerald-500"
+          @click="toggleLoop"
+          class="px-4 py-2 bg-emerald-800 rounded-full hover:bg-emerald-500"
         >
           {{ isLooping ? "Stop" : "Start" }}
         </button>
@@ -102,7 +55,12 @@
 </template>
 
 <script>
+import TimeInputWindow from "./TimeInputWindow.vue"; // A reusable time input component
+
 export default {
+  components: {
+    TimeInputWindow,
+  },
   data() {
     return {
       brownNoise:
@@ -110,178 +68,82 @@ export default {
       isPlaying: false,
       isLooping: false,
       volume: 1,
-      currentTime: 0,
-      duration: 0,
       countdownInterval: null,
-      play: {
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-      },
-      pause: {
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-      },
+      play: { hours: 0, minutes: 0, seconds: 0 },
+      pause: { hours: 0, minutes: 0, seconds: 0 },
       totalTimeInSeconds: 0,
-      formattedCountdown: "",
-    };
-  },
-  mounted() {
-    const audio = this.$refs.audioPlayer;
-    audio.volume = this.volume;
-
-    audio.onloadedmetadata = () => {
-      this.duration = audio.duration;
-    };
-
-    audio.ontimeupdate = () => {
-      this.currentTime = audio.currentTime;
     };
   },
   computed: {
-    playHours() {
-      return this.play.hours > 99
-        ? 99
-        : this.play.hours < 0
-        ? 0
-        : this.play.hours;
-    },
-    playMinutes() {
-      return this.play.minutes > 59
-        ? 59
-        : this.play.minutes < 0
-        ? 0
-        : this.play.minutes;
-    },
-    playSeconds() {
-      return this.play.seconds > 59
-        ? 59
-        : this.play.seconds < 0
-        ? 0
-        : this.play.seconds;
-    },
-    pauseHours() {
-      return this.pause.hours > 99
-        ? 99
-        : this.pause.hours < 0
-        ? 0
-        : this.pause.hours;
-    },
-    pauseMinutes() {
-      return this.pause.minutes > 59
-        ? 59
-        : this.pause.minutes < 0
-        ? 0
-        : this.pause.minutes;
-    },
-    pauseSeconds() {
-      return this.pause.seconds > 59
-        ? 59
-        : this.pause.seconds < 0
-        ? 0
-        : this.pause.seconds;
+    formattedCountdown() {
+      const totalTimeInSeconds = this.totalTimeInSeconds;
+      return `${Math.floor(totalTimeInSeconds / 3600)}:${Math.floor(
+        (totalTimeInSeconds % 3600) / 60
+      )}:${totalTimeInSeconds % 60}`;
     },
   },
-  watch: {
-    // Watchers to update the model values with the computed properties when user inputs are invalid
-    playHours(newValue) {
-      this.play.hours = newValue;
-    },
-    playMinutes(newValue) {
-      this.play.minutes = newValue;
-    },
-    playSeconds(newValue) {
-      this.play.seconds = newValue;
-    },
-    pauseHours(newValue) {
-      this.pause.hours = newValue;
-    },
-    pauseMinutes(newValue) {
-      this.pause.minutes = newValue;
-    },
-    pauseSeconds(newValue) {
-      this.pause.seconds = newValue;
-    },
+  mounted() {
+    this.$refs.audioPlayer.volume = this.volume;
   },
   methods: {
-    playPause() {
+    toggleLoop() {
+      const audio = this.$refs.audioPlayer;
+
+      if (this.isLooping) {
+        this.stopLoop();
+        audio.pause();
+        return;
+      }
+
+      this.isLooping = true;
+      this.startCountdown();
+    },
+    startCountdown() {
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+      }
+
+      this.countdownInterval = setInterval(() => {
+        if (this.totalTimeInSeconds > 0) {
+          this.totalTimeInSeconds--;
+        } else {
+          this.togglePlayPause();
+        }
+      }, 1000);
+    },
+    stopLoop() {
+      this.isLooping = false;
+      this.totalTimeInSeconds = 0;
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+      }
+    },
+    togglePlayPause() {
       const audio = this.$refs.audioPlayer;
       if (this.isPlaying) {
         audio.pause();
+        this.totalTimeInSeconds = this.convertToSeconds(
+          this.pause.hours,
+          this.pause.minutes,
+          this.pause.seconds
+        );
       } else {
-        audio.currentTime = 5;
+        audio.currentTime = 12;
         audio.play();
+        this.totalTimeInSeconds = this.convertToSeconds(
+          this.play.hours,
+          this.play.minutes,
+          this.play.seconds
+        );
       }
       this.isPlaying = !this.isPlaying;
     },
-    startStop() {
-      const audio = this.$refs.audioPlayer;
-
-      if (!this.isLooping) {
-        this.isLooping = true;
-
-        if (this.countdownInterval) {
-          clearInterval(this.countdownInterval);
-        }
-
-        this.countdownInterval = setInterval(() => {
-          let totalTimeInSeconds = this.totalTimeInSeconds;
-
-          if (totalTimeInSeconds > 0) {
-            totalTimeInSeconds--;
-            this.formattedCountdown = `${Math.floor(
-              totalTimeInSeconds / 3600
-            )}:${Math.floor((totalTimeInSeconds % 3600) / 60)}:${
-              totalTimeInSeconds % 60
-            }`;
-            this.totalTimeInSeconds = totalTimeInSeconds;
-          } else {
-            if (this.isPlaying) {
-              audio.pause();
-              this.totalTimeInSeconds = this.convertToSeconds(
-                this.pause.hours,
-                this.pause.minutes,
-                this.pause.seconds
-              );
-            } else {
-              audio.currentTime = 10;
-              audio.play();
-              this.totalTimeInSeconds = this.convertToSeconds(
-                this.play.hours,
-                this.play.minutes,
-                this.play.seconds
-              );
-            }
-
-            this.isPlaying = !this.isPlaying;
-          }
-        }, 1000);
-      } else {
-        this.isLooping = false;
-        audio.pause();
-        this.isPlaying = false;
-        this.totalTimeInSeconds = 0;
-        if (this.countdownInterval) {
-          clearInterval(this.countdownInterval);
-        }
-      }
-    },
     convertToSeconds(hours, minutes, seconds) {
+      console.log({ hours, minutes, seconds });
       return hours * 3600 + minutes * 60 + seconds;
     },
     setVolume() {
       this.$refs.audioPlayer.volume = this.volume;
-    },
-    seek() {
-      this.$refs.audioPlayer.currentTime = this.currentTime;
-    },
-    formatTime(time) {
-      const minutes = Math.floor(time / 60);
-      const seconds = Math.floor(time % 60)
-        .toString()
-        .padStart(2, "0");
-      return `${minutes}:${seconds}`;
     },
   },
 };
